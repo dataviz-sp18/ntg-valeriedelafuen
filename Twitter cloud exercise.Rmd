@@ -1,0 +1,100 @@
+---
+title: "The vision of energy for the Energy Department vs the United Nations Framework Convention on Climate Change"
+author: "Valerie de la Fuente"
+date: "5/28/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(knitr)
+library(broom)
+library(stringr)
+library(modelr)
+library(forcats)
+library(tidytext)
+library(rtweet)
+library(wordcloud2)
+library(scales)
+
+options(digits = 3)
+set.seed(1234)
+theme_set(theme_minimal())
+```
+```{r}
+# Used code seen in class
+
+UNFCCC <- get_timelines("UNFCCC",
+                      n = 3200,
+                      include_rts = FALSE)
+```
+```{r}
+UNFCCC_token <- UNFCCC %>%
+  unnest_tokens(word, text, token = "tweets") %>%
+  filter(!word %in% stop_words$word)
+
+UNFCCCcount <-
+UNFCCC_token %>%
+count(word, sort = TRUE) %>%
+filter(!word == "rt") 
+
+wordcloud2(UNFCCCcount)
+```
+```{r}
+UNFCCCcount %>%
+  filter(word == "solar") %>%
+print(UNFCCCcount)
+```
+
+
+```{r}
+ENERGY <- get_timelines("ENERGY",
+                      n = 3200,
+                      include_rts = FALSE)
+```
+```{r}
+ENERGY_token <- ENERGY %>%
+  unnest_tokens(word, text, token = "tweets") %>%
+  filter(!word %in% stop_words$word)
+
+ENERGYcount <-
+ENERGY_token %>%
+count(word, sort = TRUE) %>%
+filter(!word == "rt") 
+
+
+
+wordcloud2(ENERGYcount)
+```
+```{r}
+ENERGYcount %>%
+  filter(word == "temperatures") %>%
+print(ENERGYcount)
+```
+
+The US left the Paris Climate Change agreement because the President does not believe climate change is real. The goal of this visualization is to compare the vision of the U.S. Energy Department vs the United Nations Framework Convention on Climate Change (UNCCC) by analyzing what do they tweet about most. That way, we could analyze what kind of energy is each of them more focused on. I chose a wordcloud because it is easier to compare word frequencies with this visualization. One of the challenges was that one of the most tweeted words was "rt", so, I eliminated it. I was expecting to see more tweets from the energy department about words used by President Trump such as "clean coal" but coal does not appear as much (only 16 times). In terms of energy types, nuclear is the one most tweeted with a frequency of 184 and solar with 86.
+
+On the other hand, the UNCCC, besides events and summits, tweets a lot about "climate", "change", "sustainability", "temperatures" and the Energy Department has only 5 mentions about climate and 10 mentions about temperature whereas the UNFCCC has 79. In terms of energy types, the UNFCCC has zero mentions on nuclear energy and 31 on solar.
+
+To visualize better both positions, I added a comparison cloud.
+```{}
+install.packages("reshape2")
+```
+```{r}
+library(reshape2)
+library(wordcloud)
+```
+
+```{r}
+bind_rows(energycc = ENERGY_token, UNFCCCcc = UNFCCC_token, .id = "person") %>%
+  count(word, person) %>%
+  acast(word ~ person, value.var = "n", fill = 0) %>%
+  comparison.cloud(max.words = 100, colors = c("blue", "red"))
+```
+
+
+
+
